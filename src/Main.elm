@@ -101,3 +101,8 @@ renderGrid model =
                         )
                 )
         )
+
+
+neighbourCoordinates : List ( Int, Int )
+neighbourCoordinates =
+    [ ( -1, -1 ), ( -1, 0 ), ( -1, 1 ), ( 0, -1 ), ( 0, 1 ), ( 1, -1 ), ( 1, 0 ), ( 1, 1 ) ]
