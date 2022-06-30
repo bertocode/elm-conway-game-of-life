@@ -68,7 +68,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ case model.gameState of
+        [ node "link" [ rel "stylesheet", href "/styles.css" ] []
+        , case model.gameState of
             Playing ->
                 button [ onClick Pause ] [ text "Pause" ]
 
