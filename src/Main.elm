@@ -105,7 +105,7 @@ update msg model =
                 ( { model | activeCells = Set.insert ( x, y ) model.activeCells }, Cmd.none )
 
         Reset ->
-            ( { model | activeCells = Set.empty }, Cmd.none )
+            ( { model | activeCells = Set.empty, gameState = Paused }, Cmd.none )
 
         Tick _ ->
             case model.gameState of
@@ -143,12 +143,15 @@ view : Model -> Html Msg
 view model =
     div []
         [ node "link" [ rel "stylesheet", href "/styles.css" ] []
-        , case model.gameState of
-            Playing ->
-                button [ onClick Pause ] [ text "Pause" ]
+        , div [ class "button-bar" ]
+            [ case model.gameState of
+                Playing ->
+                    button [ onClick Pause ] [ text "Pause" ]
 
-            Paused ->
-                button [ onClick Play ] [ text "Play" ]
+                Paused ->
+                    button [ onClick Play ] [ text "Play" ]
+            , button [ onClick Reset ] [ text "Reset" ]
+            ]
         , div [ class "game-of-life" ]
             [ renderGrid model ]
         ]
