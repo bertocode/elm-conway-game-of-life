@@ -62,10 +62,10 @@ tickSpeedToTick tickSpeed =
             1000.0
 
         Normal ->
-            600.0
+            400.0
 
         Fast ->
-            300.0
+            100.0
 
 
 subscriptions : Model -> Sub Msg
