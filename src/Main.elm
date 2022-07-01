@@ -166,9 +166,28 @@ update msg model =
                 ( gridX, gridY ) =
                     model.gridSize
 
+                gridLength =
+                    (2 * gridX) * (2 * gridY)
+
                 randomGrid =
-                    Random.int -(max gridX gridY) (max gridX gridY)
-                        |> Random.andThen (\len -> Random.list len <| Random.pair (Random.int -gridX gridX) (Random.int -gridY gridY))
+                    Random.map (\n -> n > 50) (Random.int 0 100)
+                        |> Random.list gridLength
+                        |> Random.map
+                            (List.indexedMap
+                                (\idx el ->
+                                    ( ( remainderBy ((2 * gridX) + 1) idx - gridX, idx // (2 * gridY) - gridY ), el )
+                                )
+                            )
+                        |> Random.map
+                            (List.filterMap
+                                (\( ( a, b ), randomVal ) ->
+                                    if randomVal then
+                                        Just ( a, b )
+
+                                    else
+                                        Nothing
+                                )
+                            )
                         |> Random.map Set.fromList
                         |> Random.map
                             (Set.filter
