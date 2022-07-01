@@ -5,11 +5,12 @@ import Html exposing (Html, button, div, node, text)
 import Html.Attributes as Attr exposing (class, classList, href, rel)
 import Html.Events exposing (onClick)
 import Set exposing (Set)
+import Time
 
 
 gridSize : ( Int, Int )
 gridSize =
-    ( 30, 30 )
+    ( 30, 25 )
 
 
 type Msg
@@ -17,6 +18,7 @@ type Msg
     | Pause
     | ToggleGridElement ( Int, Int )
     | Reset
+    | Tick Time.Posix
 
 
 type alias Model =
@@ -41,7 +43,7 @@ main =
         { init = \_ -> init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -63,6 +65,14 @@ update msg model =
 
         Reset ->
             ( { model | activeCells = Set.empty }, Cmd.none )
+
+        Tick _ ->
+            case model.gameState of
+                Paused ->
+                    ( model, Cmd.none )
+
+                Playing ->
+                    ( { model | activeCells = evolveCells gridSize model.activeCells }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -103,6 +113,52 @@ renderGrid model =
         )
 
 
-neighbourCoordinates : List ( Int, Int )
-neighbourCoordinates =
-    [ ( -1, -1 ), ( -1, 0 ), ( -1, 1 ), ( 0, -1 ), ( 0, 1 ), ( 1, -1 ), ( 1, 0 ), ( 1, 1 ) ]
+neighbourOfACell : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int )
+neighbourOfACell ( boardX, boardY ) ( x, y ) =
+    [ ( x - 1, y - 1 ), ( x - 1, y ), ( x - 1, y + 1 ), ( x, y - 1 ), ( x, y + 1 ), ( x + 1, y - 1 ), ( x + 1, y ), ( x + 1, y + 1 ) ]
+        |> List.filter
+            (\( neighbourX, neighbourY ) ->
+                if neighbourX < -boardX || neighbourY < -boardY || neighbourX > boardX || neighbourY > boardY then
+                    False
+
+                else
+                    True
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Time.every 1000 Tick
+        ]
+
+
+evolveCells : ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
+evolveCells grid activeCells =
+    Set.toList activeCells
+        |> List.map (neighbourOfACell grid)
+        |> List.concat
+        |> Set.fromList
+        |> Set.union activeCells
+        |> Set.filter
+            (\( currentX, currentY ) ->
+                let
+                    currentNeighbours =
+                        neighbourOfACell grid ( currentX, currentY )
+                            |> List.filter (\( x, y ) -> Set.member ( x, y ) activeCells)
+                            |> List.length
+                in
+                case currentNeighbours of
+                    2 ->
+                        if Set.member ( currentX, currentY ) activeCells then
+                            True
+
+                        else
+                            False
+
+                    3 ->
+                        True
+
+                    _ ->
+                        False
+            )

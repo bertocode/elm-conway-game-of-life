@@ -21,8 +21,8 @@ body {
 .item {
     background-color: white;
     border: 1px solid black;
-    width: 10px;
-    height: 10px;
+    width: 15px;
+    height: 15px;
 }
 
 .item.alive {
