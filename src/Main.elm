@@ -32,85 +32,11 @@ type GameState
     | Paused
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { gameState = Paused, activeCells = Set.empty }, Cmd.none )
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = \_ -> init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Play ->
-            ( { model | gameState = Playing }, Cmd.none )
-
-        Pause ->
-            ( { model | gameState = Paused }, Cmd.none )
-
-        ToggleGridElement ( x, y ) ->
-            if Set.member ( x, y ) model.activeCells then
-                ( { model | activeCells = Set.remove ( x, y ) model.activeCells }, Cmd.none )
-
-            else
-                ( { model | activeCells = Set.insert ( x, y ) model.activeCells }, Cmd.none )
-
-        Reset ->
-            ( { model | activeCells = Set.empty }, Cmd.none )
-
-        Tick _ ->
-            case model.gameState of
-                Paused ->
-                    ( model, Cmd.none )
-
-                Playing ->
-                    ( { model | activeCells = evolveCells gridSize model.activeCells }, Cmd.none )
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ node "link" [ rel "stylesheet", href "/styles.css" ] []
-        , case model.gameState of
-            Playing ->
-                button [ onClick Pause ] [ text "Pause" ]
-
-            Paused ->
-                button [ onClick Play ] [ text "Play" ]
-        , div [ class "game-of-life" ]
-            [ renderGrid model ]
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Time.every 1000 Tick
         ]
-
-
-renderGrid : Model -> Html Msg
-renderGrid model =
-    div [ class "row" ] <|
-        (List.range -(Tuple.first gridSize) (Tuple.first gridSize)
-            |> List.map
-                (\x ->
-                    div [ class "column" ] <|
-                        (List.range -(Tuple.second gridSize) (Tuple.second gridSize)
-                            |> List.map
-                                (\y ->
-                                    div
-                                        [ classList [ ( "item", True ), ( "alive", Set.member ( x, y ) model.activeCells ) ]
-                                        , Attr.attribute "y" <| String.fromInt y
-                                        , Attr.attribute "x" <| String.fromInt x
-                                        , onClick <| ToggleGridElement ( x, y )
-                                        ]
-                                        []
-                                )
-                        )
-                )
-        )
 
 
 neighbourOfACell : ( Int, Int ) -> ( Int, Int ) -> List ( Int, Int )
@@ -124,13 +50,6 @@ neighbourOfACell ( boardX, boardY ) ( x, y ) =
                 else
                     True
             )
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Time.every 1000 Tick
-        ]
 
 
 evolveCells : ( Int, Int ) -> Set ( Int, Int ) -> Set ( Int, Int )
@@ -162,3 +81,84 @@ evolveCells grid activeCells =
                     _ ->
                         False
             )
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { gameState = Paused, activeCells = Set.empty }, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Play ->
+            ( { model | gameState = Playing }, Cmd.none )
+
+        Pause ->
+            ( { model | gameState = Paused }, Cmd.none )
+
+        ToggleGridElement ( x, y ) ->
+            if Set.member ( x, y ) model.activeCells then
+                ( { model | activeCells = Set.remove ( x, y ) model.activeCells }, Cmd.none )
+
+            else
+                ( { model | activeCells = Set.insert ( x, y ) model.activeCells }, Cmd.none )
+
+        Reset ->
+            ( { model | activeCells = Set.empty }, Cmd.none )
+
+        Tick _ ->
+            case model.gameState of
+                Paused ->
+                    ( model, Cmd.none )
+
+                Playing ->
+                    ( { model | activeCells = evolveCells gridSize model.activeCells }, Cmd.none )
+
+
+renderGrid : Model -> Html Msg
+renderGrid model =
+    div [ class "row" ] <|
+        (List.range -(Tuple.first gridSize) (Tuple.first gridSize)
+            |> List.map
+                (\x ->
+                    div [ class "column" ] <|
+                        (List.range -(Tuple.second gridSize) (Tuple.second gridSize)
+                            |> List.map
+                                (\y ->
+                                    div
+                                        [ classList [ ( "item", True ), ( "alive", Set.member ( x, y ) model.activeCells ) ]
+                                        , Attr.attribute "y" <| String.fromInt y
+                                        , Attr.attribute "x" <| String.fromInt x
+                                        , onClick <| ToggleGridElement ( x, y )
+                                        ]
+                                        []
+                                )
+                        )
+                )
+        )
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ node "link" [ rel "stylesheet", href "/styles.css" ] []
+        , case model.gameState of
+            Playing ->
+                button [ onClick Pause ] [ text "Pause" ]
+
+            Paused ->
+                button [ onClick Play ] [ text "Play" ]
+        , div [ class "game-of-life" ]
+            [ renderGrid model ]
+        ]
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = \_ -> init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
