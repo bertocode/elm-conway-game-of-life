@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "elm make --optimize src/Main.elm --output=build/elm.js"
+  },
   "devDependencies": {
     "elm-format": "^0.8.5",
     "elm-test": "^0.19.1-revision8"
