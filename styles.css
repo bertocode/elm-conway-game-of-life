@@ -1,3 +1,7 @@
+:root {
+    --button-color: #002989;
+}
+
 body {
     background-color: #3d0076;
 }
@@ -36,8 +40,16 @@ body {
 }
 
 button {
-    background-color: #002989;
+    background-color: var(--button-color);
     border: 1px solid white;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin: 10px;
+}
+
+select {
+    background-color: var(--button-color);
     color: white;
     border-radius: 8px;
     padding: 10px 20px;

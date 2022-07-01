@@ -1,9 +1,9 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, node, text)
-import Html.Attributes as Attr exposing (class, classList, href, rel)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, node, option, select, text)
+import Html.Attributes as Attr exposing (class, classList, href, rel, selected, value)
+import Html.Events exposing (onClick, onInput)
 import Set exposing (Set)
 import Time
 
@@ -17,6 +17,7 @@ type Msg
     = Play
     | Pause
     | ToggleGridElement ( Int, Int )
+    | ChangeTickSpeed String
     | Reset
     | Tick Time.Posix
 
@@ -24,6 +25,7 @@ type Msg
 type alias Model =
     { gameState : GameState
     , activeCells : Set ( Int, Int )
+    , tickSpeed : TickSpeed
     }
 
 
@@ -32,10 +34,39 @@ type GameState
     | Paused
 
 
+type TickSpeed
+    = Fast
+    | Normal
+    | Slow
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { gameState = Paused
+      , activeCells = Set.empty
+      , tickSpeed = Normal
+      }
+    , Cmd.none
+    )
+
+
+tickSpeedToTick : TickSpeed -> Float
+tickSpeedToTick tickSpeed =
+    case tickSpeed of
+        Slow ->
+            1000.0
+
+        Normal ->
+            600.0
+
+        Fast ->
+            300.0
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Time.every 1000 Tick
+        [ Time.every (tickSpeedToTick model.tickSpeed) Tick
         ]
 
 
@@ -83,11 +114,6 @@ evolveCells grid activeCells =
             )
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { gameState = Paused, activeCells = Set.empty }, Cmd.none )
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -114,6 +140,21 @@ update msg model =
 
                 Playing ->
                     ( { model | activeCells = evolveCells gridSize model.activeCells }, Cmd.none )
+
+        ChangeTickSpeed tickString ->
+            let
+                tickSpeed =
+                    case tickString of
+                        "slow" ->
+                            Slow
+
+                        "fast" ->
+                            Fast
+
+                        _ ->
+                            Normal
+            in
+            ( { model | tickSpeed = tickSpeed }, Cmd.none )
 
 
 renderGrid : Model -> Html Msg
@@ -151,6 +192,11 @@ view model =
                 Paused ->
                     button [ onClick Play ] [ text "Play" ]
             , button [ onClick Reset ] [ text "Reset" ]
+            , select [ onInput ChangeTickSpeed ]
+                [ option [ value "fast" ] [ text "Fast" ]
+                , option [ value "normal", selected True ] [ text "Normal" ]
+                , option [ value "slow" ] [ text "Slow" ]
+                ]
             ]
         , div [ class "game-of-life" ]
             [ renderGrid model ]
