@@ -4,6 +4,7 @@ import Browser
 import Html exposing (Html, button, div, node, option, select, text)
 import Html.Attributes as Attr exposing (class, classList, href, rel, selected, value)
 import Html.Events exposing (onClick, onInput)
+import Random
 import Set exposing (Set)
 import Time
 
@@ -20,12 +21,15 @@ type Msg
     | ChangeTickSpeed String
     | Reset
     | Tick Time.Posix
+    | GetRandomGameOfLife
+    | NewGrid (Set ( Int, Int ))
 
 
 type alias Model =
     { gameState : GameState
     , activeCells : Set ( Int, Int )
     , tickSpeed : TickSpeed
+    , gridSize : ( Int, Int )
     }
 
 
@@ -45,6 +49,7 @@ init =
     ( { gameState = Paused
       , activeCells = Set.empty
       , tickSpeed = Normal
+      , gridSize = gridSize
       }
     , Cmd.none
     )
@@ -156,6 +161,31 @@ update msg model =
             in
             ( { model | tickSpeed = tickSpeed }, Cmd.none )
 
+        GetRandomGameOfLife ->
+            let
+                ( gridX, gridY ) =
+                    model.gridSize
+
+                randomGrid =
+                    Random.int -(max gridX gridY) (max gridX gridY)
+                        |> Random.andThen (\len -> Random.list len <| Random.pair (Random.int -gridX gridX) (Random.int -gridY gridY))
+                        |> Random.map Set.fromList
+                        |> Random.map
+                            (Set.filter
+                                (\( x, y ) ->
+                                    if x > gridX || y > gridY || x < -gridX || y < -gridY then
+                                        False
+
+                                    else
+                                        True
+                                )
+                            )
+            in
+            ( model, Random.generate NewGrid randomGrid )
+
+        NewGrid newGrid ->
+            ( { model | activeCells = newGrid }, Cmd.none )
+
 
 renderGrid : Model -> Html Msg
 renderGrid model =
@@ -197,6 +227,7 @@ view model =
                 , option [ value "normal", selected True ] [ text "Normal" ]
                 , option [ value "slow" ] [ text "Slow" ]
                 ]
+            , button [ onClick GetRandomGameOfLife ] [ text "Get Random" ]
             ]
         , div [ class "game-of-life" ]
             [ renderGrid model ]
