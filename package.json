@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "elm make --optimize src/Main.elm --output=build/elm.js"
+    "build": "elm make --optimize src/Main.elm --output=build/elm.js",
+    "deploy": "elm make --optimize src/Main.elm --output=build/elm.js && gh-pages -d ."
   },
   "devDependencies": {
     "elm-format": "^0.8.5",
